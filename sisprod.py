@@ -44,16 +44,6 @@ print("============ URUTAN PENJADWALAN METODE STR ============")
 print(df_solusi.to_string(index=False))
 print("=======================================================\n")
 
-# Hitung Rata-rata Performansi untuk Ringkasan Analisis
-mean_flow_time = df_solusi['Waktu Selesai (C)'].mean()
-max_tardiness = df_solusi['Keterlambatan (T)'].max()
-jumlah_terlambat = (df_solusi['Keterlambatan (T)'] > 0).sum()
-
-print(f"Rata-rata Waktu Alir (Mean Flow Time) : {mean_flow_time:.2f}")
-print(f"Keterlambatan Maksimum (Max Tardiness): {max_tardiness}")
-print(f"Jumlah Job yang Terlambat             : {jumlah_terlambat} dari {len(data_jobs)} job\n")
-
-
 # =====================================================================
 # 3. VISUALISASI TIME-PHASED FLOW (GANTT CHART)
 # =====================================================================
@@ -61,11 +51,44 @@ fig, ax = plt.subplots(figsize=(11, 4))
 
 # Batasan sumbu grafik
 ax.set_ylim(0, 3)
-ax.set_xlim(0, current_time + 2)  # Dinamis mengikuti total waktu selesai + buffer
+ax.set_xlim(0, current_time + 2)  
 ax.set_yticks([1.5])
 ax.set_yticklabels(['Mesin Fotocopi'], fontsize=12, fontweight='bold')
 ax.set_xlabel('Skala Waktu (Waktu Proses / Urutan Waktu)', fontsize=11)
 ax.set_title('Time-Phased Flow Analisis Penjadwalan Metode STR', fontsize=14, fontweight='bold', pad=15)
 
-# Palet warna representasi tiap Job (bisa disesuaikan)
-colors = {'E': '#A8DADC',
+# Perbaikan SyntaxError: Sudah ditutup menggunakan '}' dengan benar di akhir baris
+colors = {'E': '#A8DADC', 'A': '#457B9D', 'B': '#1D3557', 'D': '#E63946', 'C': '#F4A261'}
+
+# Gambar blok diagram satu per satu sesuai urutan hasil STR
+for detail in solved_details:
+    job_name = detail['Job']
+    p_time = detail['Waktu Proses (P)']
+    start = detail['Waktu Mulai']
+    end = detail['Waktu Selesai (C)']
+    
+    # 1. Gambar kotak proses kerja Job
+    ax.broken_barh([(start, p_time)], (0.8, 1.4), facecolors=colors[job_name], edgecolor='black')
+    
+    # 2. Teks Nama Job di tengah kotak
+    text_color = 'white' if job_name in ['B', 'A', 'D'] else 'black'
+    ax.text(start + (p_time / 2), 1.5, f"Job {job_name}", 
+            color=text_color, ha='center', va='center', fontsize=12, fontweight='bold')
+    
+    # 3. Tambahkan tanda panah penyelesaian di bawah blok (Job Completed)
+    ax.annotate(f"{job_name}\n(t={end})", 
+                xy=(end, 0.7), 
+                xytext=(end, 0.1),
+                arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=6),
+                ha='center', fontsize=10, fontweight='bold')
+
+# Pengaturan grid garis bantu vertikal berdasarkan skala angka waktu
+ax.set_xticks(range(0, current_time + 3))
+ax.grid(axis='x', linestyle='--', alpha=0.5)
+
+# Membersihkan tampilan frame atas dan kanan
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+plt.tight_layout()
+plt.show()
